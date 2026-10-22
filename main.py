@@ -7,12 +7,13 @@ from openai import OpenAI
 app = FastAPI(title="Hey Pillu AI Server")
 
 client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY")
+    api_key=os.environ.get("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1"
 )
 
 class ChatRequest(BaseModel):
     messages: list[dict]
-    model: str = "gpt-4o-mini"
+    model: str = "openai/gpt-oss-20b"
     temperature: float = 0.7
 
 @app.get("/")
@@ -25,10 +26,10 @@ async def health():
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
-    if not os.environ.get("OPENAI_API_KEY"):
+    if not os.environ.get("GROQ_API_KEY"):
         raise HTTPException(
             status_code=500,
-            detail="API key is not configured"
+            detail="GROQ_API_KEY is not configured"
         )
 
     try:
@@ -38,9 +39,9 @@ async def chat(request: ChatRequest):
             temperature=request.temperature
         )
         return {"reply": response.choices[0].message.content}
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail="AI request failed"
+            detail=str(e)
         )
-      
+        
